@@ -35,16 +35,18 @@ API Calls
 */
 
 const fetchWeather = async (cityName: string) => {
+  console.log('Fetching weather for: ', cityName);
+
   const response = await fetch('/api/weather/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ cityName }),
+    body: JSON.stringify({ city: cityName }),
   });
+  console.log('Response: ', response.status);
 
   const weatherData = await response.json();
-
   console.log('weatherData: ', weatherData);
 
   renderCurrentWeather(weatherData[0]);
@@ -77,6 +79,10 @@ Render Functions
 */
 
 const renderCurrentWeather = (currentWeather: any): void => {
+  if (!currentWeather) {
+    console.error('Error: Current weather data is not available');
+  }
+
   const { city, date, icon, iconDescription, tempF, windSpeed, humidity } =
     currentWeather;
 
@@ -251,6 +257,7 @@ Event Handlers
 
 const handleSearchFormSubmit = (event: any): void => {
   event.preventDefault();
+  console.log('Form submitted');
 
   if (!searchInput.value) {
     throw new Error('City cannot be blank');
