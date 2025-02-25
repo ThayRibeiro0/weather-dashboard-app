@@ -5,32 +5,35 @@ import weatherService from "../../service/weatherService.js";
 
 const router = Router();
 
-router.post("/api/weather", async (req, res) => {
+router.post("/", async (req, res) => {
+  console.log("Received POST request:", req.body);
   try {
     const { city } = req.body;
     if (!city) {
       return res.status(400).json({ error: "City name is required" });
     }
 
-    const API_KEY = process.env.API_KEY || 'SUA_CHAVE_AQUI';
-    const url = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}`;
+    const API_KEY = process.env.API_KEY;
+    
+    if (!API_KEY) {
+      return res.status(500).json({ error: "API Key is missing" });
+    }
+
+    const url = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
+    console.log("Fetching weather from:", url);
 
     const response = await axios.get(url);
     return res.json(response.data);
-
   } catch (error: any) {
-    console.error("Erro na API do clima:", error.response?.data || error.message);
-    
-    if (error.response) {
-      return res.status(error.response.status).json({ error: error.response.data.message });
-    } else {
-      return res.status(500).json({ error: "Erro ao buscar informações do clima" });
-    }
+    console.error("Erro ao buscar o clima:", error.response?.data || error.message);
+    return res.status(500).json({ error: "Error retrieving weather information" });
   }
 });
 
+
+
 // TODO: POST Request with city name to retrieve weather data
-router.post("/", async (req, res) => {
+router.post("/weather", async (req, res) => {
   const city = req.body.city;
   if (!city) {
     return res.status(400).json({ error: "City name is required" });

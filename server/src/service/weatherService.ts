@@ -40,7 +40,6 @@ class WeatherService {
   // TODO: Complete getWeatherForCity method
   // async getWeatherForCity(city: string) {}
 
-  private baseWeatherURL = "https://api.openweathermap.org/data/2.5/forecast";
   private baseGeoURL = 'https://api.openweathermap.org/geo/1.0/direct';
   private API_KEY = process.env.OPEN_WEATHER_API_KEY || '';
 
@@ -62,7 +61,7 @@ class WeatherService {
   }
 
   private buildWeatherQuery(coordinates: Coordinates): string {
-    return `${this.baseWeatherURL}?lat=${coordinates.lat}&lon=${coordinates.lon}&units=metric&appid=${this.API_KEY}`;
+    return `https://api.openweathermap.org/data/2.5/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}&units=metric&appid=${this.API_KEY}`;
   }
 
   private async fetchAndDestructureLocationData(city: string): Promise<Coordinates> {
@@ -72,35 +71,67 @@ class WeatherService {
 
   private async fetchWeatherData(coordinates: Coordinates): Promise<any> {
     const url = this.buildWeatherQuery(coordinates);
+    console.log("Fetching forecast data from:", url); // Log para depuração
     const response = await fetch(url);
-    return response.json();
+    const data: any = await response.json();
+  
+    if (data.cod !== "200") {
+      console.error("Forecast unavailable:", data);
+      throw new Error("Forecast data is not available");
+    }
+  
+    return data;
   }
+  
 
   private parseCurrentWeather(response: any): Weather {
-    if (!response || !response.main) {
-      throw new Error('Weather data is not available');
+    console.log("Parsing weather response:", response); // Debugging log
+  
+    if (!response || !response.main || !response.weather || !response.name) {
+      console.error("Invalid weather response:", response);
+      throw new Error("Weather data is not available");
     }
+  
     return new Weather(
-      response.list[0].main.temp,
-      response.list[0].weather[0].description,
-      response.city.name
+      response.main.temp,
+      response.weather[0].description,
+      response.name
     );
   }
+  
 
-  private buildForecastArray(currentWeather: Weather, weatherData: any[]): Weather[] {
-    return weatherData.map((data: any) => new Weather(
+private buildForecastArray(currentWeather: Weather, weatherData: any[]): Weather[] {
+  console.log("Weather API Response:", weatherData);
+  return weatherData.map((data: any) => new Weather(
       data.main.temp, 
       data.weather[0].description, 
       currentWeather.city
-    ));
-  }
+  ));
+}
 
-  async getWeatherForCity(city: string): Promise<Weather[]> {
+async getWeatherForCity(city: string): Promise<Weather[]> {
+  try {
+    console.log('Fetching forecast data for city:', city);
     const coordinates = await this.fetchAndDestructureLocationData(city);
     const weatherResponse = await this.fetchWeatherData(coordinates);
-    const currentWeather = this.parseCurrentWeather(weatherResponse);
-    return this.buildForecastArray(currentWeather, weatherResponse.list || []);
-  } 
+    
+    console.log("Weather API Response:", weatherResponse);
+
+    if (!weatherResponse || !weatherResponse.list) {
+      throw new Error("Invalid forecast data received from API");
+    }
+
+    console.log("Forecast available: Sim");
+    
+    const currentWeather = this.parseCurrentWeather(weatherResponse.list[0]);
+    return this.buildForecastArray(currentWeather, weatherResponse.list);
+  } catch (error) {
+    console.error("Error fetching forecast data:", error);
+    console.log("Forecast available: Não");
+    throw new Error("Failed to fetch forecast data");
+  }
+}
+
 }
 
 export default new WeatherService();

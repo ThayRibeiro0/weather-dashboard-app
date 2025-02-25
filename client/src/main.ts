@@ -35,7 +35,7 @@ API Calls
 */
 
 const fetchWeather = async (cityName: string) => {
-  console.log('Fetching weather for: ', cityName);
+  console.log('Fetching weather for:', cityName);
 
   const response = await fetch('/api/weather/', {
     method: 'POST',
@@ -44,24 +44,49 @@ const fetchWeather = async (cityName: string) => {
     },
     body: JSON.stringify({ city: cityName }),
   });
-  console.log('Response: ', response.status);
+
+  console.log('Response status:', response.status);
 
   const weatherData = await response.json();
-  console.log('weatherData: ', weatherData);
+  console.log('Weather data:', weatherData);
 
-  renderCurrentWeather(weatherData[0]);
-  renderForecast(weatherData.slice(1));
+  if (!weatherData || Object.keys(weatherData).length === 0) {
+    console.error('Error: No weather data received.');
+    return;
+  }
+
+  renderCurrentWeather(weatherData); 
+
+ if (weatherData.forecast && Array.isArray(weatherData.forecast)) {
+  renderForecast(weatherData.forecast);
+  console.log('Forecast received:', weatherData.forecast);
+
+} else {
+  forecastContainer.innerHTML = '<p class="text-center">No forecast available</p>';
+}
 };
 
+
 const fetchSearchHistory = async () => {
-  const history = await fetch('/api/weather/history', {
+  const response = await fetch('/api/weather/history', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
     },
   });
-  return history;
+  return response.json(); 
 };
+
+const saveCityToHistory = async (cityName: string) => {
+  await fetch('/api/weather/save', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ city: cityName }),
+  });
+};
+
 
 const deleteCityFromHistory = async (id: string) => {
   await fetch(`/api/weather/history/${id}`, {
@@ -81,12 +106,18 @@ Render Functions
 const renderCurrentWeather = (currentWeather: any): void => {
   if (!currentWeather) {
     console.error('Error: Current weather data is not available');
+    return;
   }
 
-  const { city, date, icon, iconDescription, tempF, windSpeed, humidity } =
-    currentWeather;
+  // Extraindo os dados da API corretamente
+  const city = currentWeather.name;
+  const date = new Date(currentWeather.dt * 1000).toLocaleDateString();
+  const icon = currentWeather.weather[0].icon;
+  const iconDescription = currentWeather.weather[0].description;
+  const tempF = (currentWeather.main.temp * 9) / 5 + 32; // Convertendo para Fahrenheit, se necessário
+  const windSpeed = currentWeather.wind.speed;
+  const humidity = currentWeather.main.humidity;
 
-  // convert the following to typescript
   heading.textContent = `${city} (${date})`;
   weatherIcon.setAttribute(
     'src',
@@ -95,7 +126,7 @@ const renderCurrentWeather = (currentWeather: any): void => {
   weatherIcon.setAttribute('alt', iconDescription);
   weatherIcon.setAttribute('class', 'weather-img');
   heading.append(weatherIcon);
-  tempEl.textContent = `Temp: ${tempF}°F`;
+  tempEl.textContent = `Temp: ${tempF.toFixed(2)}°F`;
   windEl.textContent = `Wind: ${windSpeed} MPH`;
   humidityEl.textContent = `Humidity: ${humidity} %`;
 
@@ -105,7 +136,9 @@ const renderCurrentWeather = (currentWeather: any): void => {
   }
 };
 
+
 const renderForecast = (forecast: any): void => {
+  console.log('Forecast data received:', forecast);
   const headingCol = document.createElement('div');
   const heading = document.createElement('h4');
 
@@ -145,8 +178,8 @@ const renderForecastCard = (forecast: any) => {
   }
 };
 
-const renderSearchHistory = async (searchHistory: any) => {
-  const historyList = await searchHistory.json();
+const renderSearchHistory = async () => {
+  const historyList = await fetchSearchHistory();
 
   if (searchHistoryContainer) {
     searchHistoryContainer.innerHTML = '';
@@ -264,7 +297,8 @@ const handleSearchFormSubmit = (event: any): void => {
   }
 
   const search: string = searchInput.value.trim();
-  fetchWeather(search).then(() => {
+  fetchWeather(search).then(async () => {
+    await saveCityToHistory(search);
     getAndRenderHistory();
   });
   searchInput.value = '';
