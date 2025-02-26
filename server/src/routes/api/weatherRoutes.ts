@@ -30,6 +30,35 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.get("/forecast", async (req, res) => {
+  const city = req.query.city || req.query.q; // Aceita "city" ou "q"
+
+  if (!city || typeof city !== "string") {
+    console.error("❌ Nenhuma cidade foi especificada na requisição.");
+    return res.status(400).json({ error: "Cidade não especificada" });
+  }
+
+  console.log(`🔍 Buscando previsão para: ${city}`);
+
+  const API_KEY = process.env.API_KEY;
+  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`;
+
+  try {
+    const response = await axios.get(url);
+    console.log("✅ Previsão obtida com sucesso!");
+    return res.json(response.data);
+  } catch (error) {
+    console.error("⚠️ Erro ao buscar a previsão do tempo:", error);
+
+    if (axios.isAxiosError(error)) {
+      return res.status(error.response?.status || 500).json(error.response?.data || { error: "Erro ao buscar dados da API" });
+    } else {
+      return res.status(500).json({ error: "Erro inesperado ao processar a requisição" });
+    }
+  }
+});
+
+
 
 
 // TODO: POST Request with city name to retrieve weather data
