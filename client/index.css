@@ -1,0 +1,47 @@
+/* Ajuste do container de pesquisa */
+#search-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  
+  /* Input e botão de busca */
+  #searchForm {
+    width: 100%;
+    max-width: 300px; /* Define um tamanho máximo */
+  }
+  
+  #searchForm input,
+  #searchForm button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  /* Container do histórico */
+  #history {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  
+  /* Botões do histórico */
+  .history-btn {
+    width: 100%;
+    max-width: 400px; /* Mesmo tamanho do botão de busca */
+    background-color: #888;
+    color: white;
+    border: none;
+    padding: 100px;
+    margin: 10px 25px;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .history-btn:hover {
+    background-color: #555;
+  }
+  

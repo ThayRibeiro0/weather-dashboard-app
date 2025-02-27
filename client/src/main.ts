@@ -38,7 +38,8 @@ const fetchTodayWeather = async (city: string) => {
     const response = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=SUA_API_KEY`
     );
-    if (!response.ok) throw new Error(`Erro ao buscar clima: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Erro ao buscar clima: ${response.statusText}`);
     const data = await response.json();
     renderTodayWeather(data);
   } catch (error) {
@@ -48,9 +49,13 @@ const fetchTodayWeather = async (city: string) => {
 
 const renderTodayWeather = (currentWeather: any): void => {
   if (!currentWeather || !currentWeather.main) {
-    console.error("❌ Erro: Dados inválidos em renderTodayWeather:", currentWeather);
+    console.error(
+      "❌ Erro: Dados inválidos em renderTodayWeather:",
+      currentWeather
+    );
     return;
   }
+
   const city = currentWeather.name;
   const date = new Date(currentWeather.dt * 1000).toLocaleDateString();
   const tempC = currentWeather.main.temp;
@@ -59,24 +64,37 @@ const renderTodayWeather = (currentWeather: any): void => {
   const icon = currentWeather.weather[0].icon;
   const description = currentWeather.weather[0].description;
 
-  // Atualiza elementos diretamente
-  heading.textContent = `${city} (${date})`;
+  // Criando um novo container para adicionar sem sobrescrever
+  const weatherDiv = document.createElement("div");
+  weatherDiv.classList.add("weather-entry");
+
+  const cityHeading = document.createElement("h3");
+  cityHeading.textContent = `${city} (${date})`;
+
+  const tempEl = document.createElement("p");
   tempEl.textContent = `🌡️ Temp: ${tempC.toFixed(1)} °C`;
+
+  const windEl = document.createElement("p");
   windEl.textContent = `💨 Wind: ${windSpeed.toFixed(1)} km/h`;
+
+  const humidityEl = document.createElement("p");
   humidityEl.textContent = `💧 Humidity: ${humidity}%`;
-  weatherIcon.setAttribute("src", `https://openweathermap.org/img/w/${icon}.png`);
+
+  const weatherIcon = document.createElement("img");
+  weatherIcon.setAttribute(
+    "src",
+    `https://openweathermap.org/img/w/${icon}.png`
+  );
   weatherIcon.setAttribute("alt", description);
 
-  // Limpa e adiciona os elementos na div #today
+  // Adicionando os elementos na div criada
+  weatherDiv.append(cityHeading, weatherIcon, tempEl, windEl, humidityEl);
+
+  // Adiciona os dados novos SEM apagar os anteriores
   if (todayContainer) {
-    todayContainer.innerHTML = ""; // Limpa conteúdo antigo
-    todayContainer.append(heading, weatherIcon, tempEl, windEl, humidityEl);
+    todayContainer.appendChild(weatherDiv);
   }
-  
-};
-
-
-
+}
 const fetchWeather = async (city: string) => {
   try {
     const response = await fetch(
@@ -172,16 +190,7 @@ const fetchSearchHistory = async () => {
   return response.json();
 };
 
-const saveCityToHistory = async (cityName: string) => {
-  await fetch("/api/weather/save", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ city: cityName }),
-  });
-};
-
+// Função para salvar uma cidade no histórico do localStorage
 const deleteCityFromHistory = async (id: string) => {
   await fetch(`/api/weather/history/${id}`, {
     method: "DELETE",
@@ -199,7 +208,10 @@ Render Functions
 
 const renderCurrentWeather = (currentWeather: any): void => {
   if (!currentWeather || !currentWeather.main) {
-    console.error("❌ Erro: Dados inválidos em renderCurrentWeather:", currentWeather);
+    console.error(
+      "❌ Erro: Dados inválidos em renderCurrentWeather:",
+      currentWeather
+    );
     return;
   }
 
@@ -223,9 +235,7 @@ const renderCurrentWeather = (currentWeather: any): void => {
   }
 };
 console.log("Weather Dashboard App", todayContainer);
-
-
-
+// renderCurrentWeather(weatherData);
 const renderForecast = (forecast: any): void => {
   console.log("Forecast data received:", forecast);
   const headingCol = document.createElement("div");
@@ -238,6 +248,33 @@ const renderForecast = (forecast: any): void => {
   if (forecastContainer) {
     forecastContainer.innerHTML = "";
     forecastContainer.append(headingCol);
+  }
+
+  const todayContainer = document.getElementById("today");
+
+  if (todayContainer) {
+    todayContainer.innerHTML = ""; // Limpa o conteúdo do container
+
+    const cityName = searchInput.value.trim(); // Pegue dinamicamente da API
+    const date = new Date().toLocaleDateString(); // Data no formato MM/DD/YYYY
+    const iconCode = "10d";
+    const weatherIcon = `https://openweathermap.org/img/w/${iconCode}.png`; // Exemplo de emoji (substitua por um ícone real da API)
+    const temperature = 75; // Pegue o valor real da API
+    const windSpeed = 10; // Pegue o valor real da API
+    const humidity = 50; // Pegue o valor real da API
+
+    // Criando um elemento para exibir as informações
+    const headingCol = document.createElement("div");
+
+    headingCol.innerHTML = `
+    <h2>${cityName.charAt(0).toUpperCase() + cityName.slice(1)} (${date}) 
+    <img src="${weatherIcon}" alt="Weather Icon"></h2>
+    <p>Temperature: ${temperature} °F</p>
+    <p>Wind: ${windSpeed} MPH</p>
+    <p>Humidity: ${humidity}%</p>
+`;
+
+    todayContainer.appendChild(headingCol);
   }
 
   for (let i = 0; i < forecast.length; i++) {
@@ -276,25 +313,8 @@ const renderForecastCard = (forecast: any) => {
   }
 };
 
-const renderSearchHistory = async () => {
-  const historyList = await fetchSearchHistory();
-  console.log("Histórico de busca carregado:", historyList);
-
-  if (searchHistoryContainer) {
-    searchHistoryContainer.innerHTML = "";
-
-    if (!historyList.length) {
-      searchHistoryContainer.innerHTML =
-        '<p class="text-center">No Previous Search History</p>';
-    }
-
-    // * Start at end of history array and count down to show the most recent cities at the top.
-    for (let i = historyList.length - 1; i >= 0; i--) {
-      const historyItem = buildHistoryListItem(historyList[i]);
-      searchHistoryContainer.append(historyItem);
-    }
-  }
-};
+// **Chamar essa função após cada pesquisa para atualizar o histórico**
+// Exemplo: handleSearchHistory("New York");
 
 /*
 
@@ -435,6 +455,32 @@ searchForm.addEventListener("submit", async (event) => {
   }
 });
 
+const getWeatherData = async () => {
+  const cityInput = (document.getElementById("cityInput") as HTMLInputElement)
+    .value;
+
+  if (!cityInput) {
+    console.error("Digite o nome da cidade!");
+    return;
+  }
+
+  const apiKey = "SUA_CHAVE_DA_API";
+  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${cityInput}&units=imperial&appid=${apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.cod !== "200") {
+      console.error("Erro da API:", data.message);
+      return;
+    }
+
+    renderForecast(data);
+  } catch (error) {
+    console.error("Erro ao buscar os dados:", error);
+  }
+};
 
 /*
 
@@ -442,10 +488,119 @@ Initial Render
 
 */
 
-const getAndRenderHistory = () =>
-  fetchSearchHistory().then(renderSearchHistory);
+// Obtém o elemento onde o histórico será renderizado
+const historyContainer = document.getElementById("history");
 
-searchForm?.addEventListener("submit", handleSearchFormSubmit);
-searchHistoryContainer?.addEventListener("click", handleSearchHistoryClick);
+// Função para salvar uma cidade no histórico do localStorage
 
+const saveCityToHistory = (city: string) => {
+  if (!city) return;
+
+  // Obtém o histórico atual ou um array vazio se for null
+  let searchHistory = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+
+  // Verifica se a cidade já está no histórico para evitar duplicatas
+  if (!searchHistory.includes(city)) {
+    searchHistory.push(city);
+    localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+  }
+
+  // Atualiza a exibição do histórico
+  getAndRenderHistory();
+};
+
+// Função para recuperar e exibir o histórico
+const getAndRenderHistory = () => {
+  if (!historyContainer) {
+    console.error("Elemento #history não encontrado no DOM.");
+    return;
+  }
+
+  // Limpa a lista atual antes de renderizar novamente
+  historyContainer.innerHTML = "";
+
+  // Obtém o histórico do localStorage
+  const searchHistory = JSON.parse(
+    localStorage.getItem("searchHistory") || "[]"
+  );
+
+  // Cria os botões para cada cidade salva no histórico
+  searchHistory.forEach((city: string) => {
+    const historyItem = document.createElement("button");
+    historyItem.textContent = city;
+    historyItem.classList.add(
+      "list-group-item",
+      "list-group-item-action",
+      "history-btn"
+    );
+
+    // Adiciona um evento para buscar a previsão ao clicar no histórico
+    historyItem.addEventListener("click", () => {
+      console.log(`🔄 Recarregando dados para: ${city}`);
+      fetchWeather(city).then(() => {
+        getAndRenderHistory();
+      });
+    });
+
+    historyContainer.appendChild(historyItem);
+  });
+};
+
+// Função para limpar todo o histórico
+const clearHistory = () => {
+  localStorage.removeItem("searchHistory");
+  getAndRenderHistory(); // Atualiza a interface
+};
+
+// Adiciona um botão para limpar o histórico
+const createClearButton = () => {
+  if (!historyContainer) return;
+
+  const clearBtn = document.createElement("button");
+  clearBtn.textContent = "Clear History";
+  clearBtn.classList.add("btn", "btn-danger", "mt-2");
+  clearBtn.addEventListener("click", clearHistory);
+
+  historyContainer.appendChild(clearBtn);
+};
+
+// Chama essa função ao carregar a página para exibir o histórico salvo
+document.addEventListener("DOMContentLoaded", () => {
+  getAndRenderHistory();
+  createClearButton();
+});
+
+// Adiciona a cidade ao histórico quando o usuário faz uma pesquisa
+searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const city = searchInput.value.trim();
+  if (city) {
+    console.log(`🔍 Buscando clima para: ${city}`);
+    await fetchWeather(city);
+    saveCityToHistory(city);
+  }
+});
+
+// Certifique-se de que os eventos são adicionados apenas uma vez
+if (searchForm) {
+  searchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const city = searchInput.value.trim();
+    if (city) {
+      console.log(`🔍 Buscando clima para: ${city}`);
+      await fetchTodayWeather(city);
+      await fetchForecast(city);
+      await saveCityToHistory(city);
+      await getAndRenderHistory(); // Atualiza o histórico após salvar
+    }
+  });
+}
+
+if (searchHistoryContainer) {
+  searchHistoryContainer.addEventListener("click", handleSearchHistoryClick);
+}
+
+// Chamar o histórico na inicialização
 getAndRenderHistory();
