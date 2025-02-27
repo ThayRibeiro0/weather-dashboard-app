@@ -455,43 +455,129 @@ searchForm.addEventListener("submit", async (event) => {
   }
 });
 
-const getWeatherData = async () => {
-  const cityInput = (document.getElementById("cityInput") as HTMLInputElement)
-    .value;
 
-  if (!cityInput) {
-    console.error("Digite o nome da cidade!");
-    return;
+// SAVE ITEMS TO HISTORY
+
+// Function to save city weather data in localStorage
+function saveWeatherData(cityName: string, weatherData: any) {
+  let history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+
+  // Remove duplicate city entries
+  history = history.filter((entry: any) => entry.city !== cityName);
+
+  // Add new city data
+  history.push({ city: cityName, weather: weatherData });
+
+  // Save updated history in localStorage
+  localStorage.setItem("searchHistory", JSON.stringify(history));
+
+  // Refresh search history buttons
+  updateHistoryButtons();
+}
+
+// Function to load weather data when clicking a city in the history
+function loadWeatherFromHistory(cityName: string) {
+  let history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+  const cityData = history.find((entry: any) => entry.city === cityName);
+
+  if (cityData) {
+    updateWeatherUI(cityName, cityData.weather);
+  }
+}
+
+// Function to update the UI with weather data
+function updateWeatherUI(cityName: string, weatherData: any) {
+  document.getElementById("cityName")!.textContent = `${cityName} (${weatherData.date})`;
+  document.getElementById("temperature")!.textContent = `Temperature: ${weatherData.temp} °F`;
+  document.getElementById("wind")!.textContent = `Wind: ${weatherData.wind} MPH`;
+  document.getElementById("humidity")!.textContent = `Humidity: ${weatherData.humidity}%`;
+
+  const forecastContainer = document.getElementById("forecast");
+  forecastContainer.innerHTML = "<h4>5-Day Forecast:</h4>";
+
+  weatherData.forecast.forEach((day: any) => {
+    const forecastItem = document.createElement("div");
+    forecastItem.className = "forecast-item";
+    forecastItem.innerHTML = `
+      <p><strong>${day.date}</strong></p>
+      <p>${day.description}</p>
+      <p>Temp: ${day.temp} °C</p>
+      <p>Wind: ${day.wind} km/h</p>
+      <p>Humidity: ${day.humidity} %</p>
+    `;
+    forecastContainer.appendChild(forecastItem);
+  });
+}
+
+// Function to update history buttons
+function updateHistoryButtons() {
+  const historyContainer = document.getElementById("history");
+  historyContainer.innerHTML = ""; // Clear previous buttons
+
+  let history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+
+  history.forEach((entry: any) => {
+    const button = document.createElement("button");
+    button.className = "list-group-item list-group-item-action history-btn";
+    button.textContent = entry.city;
+    
+    // Clicking the button loads the weather data
+    button.onclick = () => loadWeatherFromHistory(entry.city);
+    
+    historyContainer.appendChild(button);
+  });
+}
+
+// Load history buttons on page load
+document.addEventListener("DOMContentLoaded", updateHistoryButtons);
+
+function saveCityWeather(cityName: string, weatherData: any) {
+  let history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
+
+  // Verifica se a cidade já está salva para não duplicar
+  const existingIndex = history.findIndex((item: any) => item.city === cityName);
+  if (existingIndex !== -1) {
+    history[existingIndex] = { city: cityName, data: weatherData };
+  } else {
+    history.push({ city: cityName, data: weatherData });
   }
 
-  const apiKey = "SUA_CHAVE_DA_API";
-  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${cityInput}&units=imperial&appid=${apiKey}`;
+  localStorage.setItem("searchHistory", JSON.stringify(history));
 
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
+  renderHistoryButtons(); // Atualiza os botões na tela
+}
 
-    if (data.cod !== "200") {
-      console.error("Erro da API:", data.message);
-      return;
-    }
+function renderHistoryButtons() {
+  const historyContainer = document.getElementById("history");
+  if (!historyContainer) return;
 
-    renderForecast(data);
-  } catch (error) {
-    console.error("Erro ao buscar os dados:", error);
-  }
-};
+  historyContainer.innerHTML = ""; // Limpa antes de adicionar os botões
 
-/*
+  let history = JSON.parse(localStorage.getItem("searchHistory") || "[]");
 
-Initial Render
+  history.forEach((item: any) => {
+    const btn = document.createElement("button");
+    btn.className = "list-group-item list-group-item-action history-btn";
+    btn.textContent = item.city;
 
-*/
+    btn.addEventListener("click", () => {
+      displayWeather(item.city, item.data);
+    });
+
+    historyContainer.appendChild(btn);
+  });
+}
+//teste
+
+
+// Initial Render
+
 
 // Obtém o elemento onde o histórico será renderizado
 const historyContainer = document.getElementById("history");
 
 // Função para salvar uma cidade no histórico do localStorage
+
 
 const saveCityToHistory = (city: string) => {
   if (!city) return;
@@ -508,6 +594,8 @@ const saveCityToHistory = (city: string) => {
   // Atualiza a exibição do histórico
   getAndRenderHistory();
 };
+
+
 
 // Função para recuperar e exibir o histórico
 const getAndRenderHistory = () => {
@@ -602,5 +690,12 @@ if (searchHistoryContainer) {
   searchHistoryContainer.addEventListener("click", handleSearchHistoryClick);
 }
 
+
+
+
 // Chamar o histórico na inicialização
 getAndRenderHistory();
+function displayWeather(city: any, data: any) {
+  throw new Error("Function not implemented.");
+}
+

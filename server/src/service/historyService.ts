@@ -67,6 +67,8 @@ class HistoryService {
     cities = cities.filter((city) => city.id !== id);
     await this.write(cities);
   }
+
+  
 }
 
 export default new HistoryService();
