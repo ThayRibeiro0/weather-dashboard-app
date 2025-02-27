@@ -35,6 +35,7 @@ class HistoryService {
     this.filePath = path.join(__dirname, "../../data/searchHistory.json");
   }
 
+  
   private async read(): Promise<City[]> {
     try {
       const cities = await fs.readFile(this.filePath, "utf-8");

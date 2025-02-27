@@ -27,12 +27,55 @@ const windEl: HTMLParagraphElement = document.getElementById(
 const humidityEl: HTMLParagraphElement = document.getElementById(
   "humidity"
 ) as HTMLParagraphElement;
-
 /*
 
 API Calls
 
 */
+
+const fetchTodayWeather = async (city: string) => {
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=SUA_API_KEY`
+    );
+    if (!response.ok) throw new Error(`Erro ao buscar clima: ${response.statusText}`);
+    const data = await response.json();
+    renderTodayWeather(data);
+  } catch (error) {
+    console.error("Erro ao buscar dados do clima atual:", error);
+  }
+};
+
+const renderTodayWeather = (currentWeather: any): void => {
+  if (!currentWeather || !currentWeather.main) {
+    console.error("❌ Erro: Dados inválidos em renderTodayWeather:", currentWeather);
+    return;
+  }
+  const city = currentWeather.name;
+  const date = new Date(currentWeather.dt * 1000).toLocaleDateString();
+  const tempC = currentWeather.main.temp;
+  const windSpeed = currentWeather.wind.speed;
+  const humidity = currentWeather.main.humidity;
+  const icon = currentWeather.weather[0].icon;
+  const description = currentWeather.weather[0].description;
+
+  // Atualiza elementos diretamente
+  heading.textContent = `${city} (${date})`;
+  tempEl.textContent = `🌡️ Temp: ${tempC.toFixed(1)} °C`;
+  windEl.textContent = `💨 Wind: ${windSpeed.toFixed(1)} km/h`;
+  humidityEl.textContent = `💧 Humidity: ${humidity}%`;
+  weatherIcon.setAttribute("src", `https://openweathermap.org/img/w/${icon}.png`);
+  weatherIcon.setAttribute("alt", description);
+
+  // Limpa e adiciona os elementos na div #today
+  if (todayContainer) {
+    todayContainer.innerHTML = ""; // Limpa conteúdo antigo
+    todayContainer.append(heading, weatherIcon, tempEl, windEl, humidityEl);
+  }
+  
+};
+
+
 
 const fetchWeather = async (city: string) => {
   try {
@@ -179,6 +222,7 @@ const renderCurrentWeather = (currentWeather: any): void => {
     todayContainer.append(heading, weatherIcon, tempEl, windEl, humidityEl);
   }
 };
+console.log("Weather Dashboard App", todayContainer);
 
 
 
@@ -378,6 +422,19 @@ const handleDeleteHistoryClick = (event: any) => {
   const cityID = JSON.parse(event.target.getAttribute("data-city")).id;
   deleteCityFromHistory(cityID).then(getAndRenderHistory);
 };
+
+searchForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const city = searchInput.value.trim();
+  if (city) {
+    console.log(`🔍 Buscando clima para: ${city}`);
+    await fetchTodayWeather(city);
+    await fetchForecast(city);
+    await saveCityToHistory(city);
+  }
+});
+
 
 /*
 

@@ -5,7 +5,7 @@ import weatherService from "../../service/weatherService.js";
 
 const router = Router();
 
-router.post("/", async (req, res) => {
+router.post("/api", async (req, res) => {
   console.log("Received POST request:", req.body);
   try {
     const { city } = req.body;
