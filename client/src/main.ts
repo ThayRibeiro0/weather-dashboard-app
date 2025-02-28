@@ -36,7 +36,7 @@ API Calls
 const fetchTodayWeather = async (city: string) => {
   try {
     const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=SUA_API_KEY`
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
     );
     if (!response.ok)
       throw new Error(`Erro ao buscar clima: ${response.statusText}`);
@@ -46,6 +46,7 @@ const fetchTodayWeather = async (city: string) => {
     console.error("Erro ao buscar dados do clima atual:", error);
   }
 };
+
 
 const renderTodayWeather = (currentWeather: any): void => {
   if (!currentWeather || !currentWeather.main) {
@@ -95,10 +96,12 @@ const renderTodayWeather = (currentWeather: any): void => {
     todayContainer.appendChild(weatherDiv);
   }
 }
+
+const API_KEY = import.meta.env.VITE_API_KEY;
 const fetchWeather = async (city: string) => {
   try {
     const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=SUA_API_KEY`
+      `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}`
     );
 
     if (!response.ok) {
@@ -106,11 +109,14 @@ const fetchWeather = async (city: string) => {
     }
 
     const data = await response.json();
-    console.log("🔥 Dados brutos da API:", data); // <---- Adicione isso
+    console.log("🔥 Dados brutos da API:", data);
 
     if (!data || !data.list) {
       throw new Error("Nenhuma previsão encontrada para esta cidade.");
     }
+
+    // 🔥 Atualiza os dados na tela após receber a resposta da API
+    updateWeatherDisplay(data);
 
     return data;
   } catch (error) {
@@ -118,6 +124,7 @@ const fetchWeather = async (city: string) => {
     return null;
   }
 };
+
 
 searchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -321,6 +328,28 @@ const renderForecastCard = (forecast: any) => {
 Helper Functions
 
 */
+
+function updateWeatherDisplay(newData: any) {
+  const weatherContainer = document.getElementById('weather-data');
+
+  if (!weatherContainer || !newData) return;
+
+  // Limpa os dados anteriores
+  weatherContainer.innerHTML = '';
+
+  // Renderiza os novos dados
+  newData.list.forEach((item: any) => {
+    const weatherElement = document.createElement('div');
+    weatherElement.innerHTML = `
+      <p><strong>${new Date(item.dt * 1000).toLocaleString()}</strong></p>
+      <p>Temperatura: ${(item.main.temp - 273.15).toFixed(2)}°C</p>
+      <p>Clima: ${item.weather[0].description}</p>
+      <hr>
+    `;
+    weatherContainer.appendChild(weatherElement);
+  });
+}
+
 
 const createForecastCard = () => {
   const col = document.createElement("div");
@@ -594,6 +623,7 @@ const saveCityToHistory = (city: string) => {
   // Atualiza a exibição do histórico
   getAndRenderHistory();
 };
+
 
 
 
