@@ -45,4 +45,5 @@
 // rm -rf server/dist
 // npx tsc
 // npm run start:dev
+//npm install typescript --save-dev
 
