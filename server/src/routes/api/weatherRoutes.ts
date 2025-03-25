@@ -2,8 +2,9 @@ import { Router } from "express";
 const router = Router();
 
 // import HistoryService from '../../service/historyService.js';
+// The imports have the .js extension because app is using ES Modules on TSCONFIG.JSON ("module": "ESNext" no tsconfig.json)
 import WeatherService from "../../service/weatherService.js";
-import historyService from "../../service/historyService";
+import historyService from "../../service/historyService.js";
 
 // TODO: POST Request with city name to retrieve weather data
 router.post("/", async (req, res) => {
