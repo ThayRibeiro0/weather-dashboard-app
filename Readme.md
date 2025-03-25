@@ -20,6 +20,12 @@ This Weather Dashboard App allows users to:
 - Save recent searches in a history list for easy access.
 - Display weather information using data from the OpenWeather API.
 
+### 📸 Screenshots
+
+<div>
+    <img src="./screenshoot.png" alt="Screenshot of the Weather Dashboard App" width="300">
+</div>
+
 ## Installation
 
 ### Clone the Repository
@@ -76,6 +82,10 @@ To deploy the application, you can follow these steps:
 - Connect your repository to a deployment platform Render: https://render.com/
 - Set the build command to *npm run render-build*.
 - Set the start command to *npm run start*.
+
+### Deployed Application
+
+Check out the live version of the portfolio here: <https://weather-dashboard-app-pm1k.onrender.com/>
 
 ## Technologies Used
 
