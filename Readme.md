@@ -13,6 +13,7 @@ A weather dashboard application that provides users with real-time weather infor
 ## Description
 
 This Weather Dashboard App allows users to:
+
 - Search for weather data by city name.
 - View current weather information such as temperature, humidity, wind speed, and more.
 - See a 5-day forecast with detailed data for each day.
